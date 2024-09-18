@@ -1,0 +1,126 @@
+const request = indexedDB.open("LibraryDB", 1);
+
+request.onupgradeneeded = function(event) {
+    const db = event.target.result;
+    
+    db.createObjectStore("Books", { keyPath: "id", autoIncrement: true });
+
+    db.createObjectStore("Novels", { keyPath: "id", autoIncrement: true });
+};
+
+request.onsuccess = function(event) {
+    const db = event.target.result;
+    
+    const booksTransaction = db.transaction(["Books"], "readwrite");
+    const booksStore = booksTransaction.objectStore("Books");
+    
+    const addBookRequest = booksStore.add({ title: "Learn JavaScript", author: "Jane Smith" });
+    
+    addBookRequest.onsuccess = function() {
+        console.log("Book added successfully.");
+
+        const getBookRequest = booksStore.get(1);
+
+        getBookRequest.onsuccess = function(event) {
+            const book = event.target.result;
+            if (book) {
+                console.log("Author:", book.author);
+
+                book.title = "Mastering JavaScript";
+                const updateRequest = booksStore.put(book);
+
+                updateRequest.onsuccess = function() {
+                    console.log("Book updated successfully.");
+                };
+
+                updateRequest.onerror = function(event) {
+                    console.error("Error updating book:", event.target.error);
+                };
+            } else {
+                console.log("Book not found.");
+            }
+        };
+
+        getBookRequest.onerror = function(event) {
+            console.error("Error retrieving book:", event.target.error);
+        };
+
+        const deleteRequest = booksStore.delete(2);
+        deleteRequest.onsuccess = function() {
+            console.log("Book deleted successfully.");
+        };
+
+        deleteRequest.onerror = function(event) {
+            console.error("Error deleting book:", event.target.error);
+        };
+
+        const clearRequest = booksStore.clear();
+        clearRequest.onsuccess = function() {
+            console.log("Books store cleared.");
+        };
+
+        clearRequest.onerror = function(event) {
+            console.error("Error clearing books store:", event.target.error);
+        };
+    };
+
+    addBookRequest.onerror = function(event) {
+        console.error("Error adding book:", event.target.error);
+    };
+
+    const novelsTransaction = db.transaction(["Novels"], "readwrite");
+    const novelsStore = novelsTransaction.objectStore("Novels");
+    
+    const addNovelRequest = novelsStore.add({ title: "Web Development", author: "Alice Brown" });
+
+    addNovelRequest.onsuccess = function() {
+        console.log("Novel added successfully.");
+
+        const getNovelRequest = novelsStore.get(1);
+
+        getNovelRequest.onsuccess = function(event) {
+            const novel = event.target.result;
+            if (novel) {
+                console.log("Title:", novel.title, "Author:", novel.author);
+            } else {
+                console.log("Novel not found.");
+            }
+        };
+
+        getNovelRequest.onerror = function(event) {
+            console.error("Error retrieving novel:", event.target.error);
+        };
+
+        const deleteNovelRequest = novelsStore.delete(1);
+        deleteNovelRequest.onsuccess = function() {
+            console.log("Novel deleted successfully.");
+        };
+
+        deleteNovelRequest.onerror = function(event) {
+            console.error("Error deleting novel:", event.target.error);
+        };
+    };
+
+    addNovelRequest.onerror = function(event) {
+        console.error("Error adding novel:", event.target.error);
+    };
+
+    novelsTransaction.oncomplete = function() {
+        db.close();
+        console.log("Transactions complete and database closed.");
+    };
+};
+
+request.onerror = function(event) {
+    console.error("Database error:", event.target.errorCode);
+};
+
+const deleteRequest = indexedDB.deleteDatabase("LibraryDB");
+
+deleteRequest.onsuccess = function() {
+    console.log("LibraryDB deleted successfully");
+};
+
+deleteRequest.onerror = function(event) {
+    console.error("Error deleting database:", event.target.error);
+};
